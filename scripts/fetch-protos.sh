@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Base URL for Memos proto files
 BASE_URL_MEMOS="https://raw.githubusercontent.com/usememos/memos/main/proto"
