@@ -1,0 +1,44 @@
+{
+  "name": "memo-mcp",
+  "version": "1.0.0",
+  "description": "MCP Server for integrating with self-hosted Memo API (usememos.com)",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "memo-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andreroggeri/memo-mcp.git"
+  },
+  "keywords": [
+    "mcp",
+    "memo",
+    "memos",
+    "model-context-protocol",
+    "ai",
+    "llm"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/andreroggeri/memo-mcp/issues"
+  },
+  "homepage": "https://github.com/andreroggeri/memo-mcp#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "axios": "^1.13.5",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
