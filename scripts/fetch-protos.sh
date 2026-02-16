@@ -8,6 +8,7 @@ BASE_URL_GOOGLE="https://raw.githubusercontent.com/googleapis/googleapis/master"
 rm -rf proto/api/v1 proto/google/api
 mkdir -p proto/api/v1
 mkdir -p proto/google/api
+mkdir -p proto/google/protobuf  # Needed for imports like google/protobuf/empty.proto, even if files are provided by tooling
 
 # Memos files to fetch
 MEMOS_FILES=(
