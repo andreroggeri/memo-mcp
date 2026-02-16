@@ -1,4 +1,5 @@
-import axios, { AxiosInstance } from 'axios';
+// TODO: Implement Memo API client
+// This will handle communication with the self-hosted Memo API (https://usememos.com/)
 
 export interface MemoApiConfig {
   baseUrl: string;
@@ -6,84 +7,48 @@ export interface MemoApiConfig {
 }
 
 export interface Memo {
-  name: string;
-  uid: string;
-  content: string;
-  visibility: string;
-  createTime: string;
-  updateTime: string;
-  displayTime?: string;
-  pinned?: boolean;
-  tags?: string[];
+  // TODO: Define Memo interface based on API response
 }
 
 export interface CreateMemoRequest {
-  content: string;
-  visibility?: 'PRIVATE' | 'PROTECTED' | 'PUBLIC';
+  // TODO: Define request interface
 }
 
 export interface UpdateMemoRequest {
-  content?: string;
-  visibility?: 'PRIVATE' | 'PROTECTED' | 'PUBLIC';
-  pinned?: boolean;
+  // TODO: Define request interface
 }
 
 export interface ListMemosResponse {
-  memos: Memo[];
-  nextPageToken?: string;
+  // TODO: Define response interface
 }
 
 export class MemoApiClient {
-  private client: AxiosInstance;
-
   constructor(config: MemoApiConfig) {
-    this.client = axios.create({
-      baseURL: `${config.baseUrl}/api/v1`,
-      headers: {
-        'Authorization': `Bearer ${config.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    // TODO: Initialize API client with axios
   }
 
   async createMemo(request: CreateMemoRequest): Promise<Memo> {
-    const response = await this.client.post<Memo>('/memos', request);
-    return response.data;
+    // TODO: Implement POST /api/v1/memos
+    throw new Error('Not implemented');
   }
 
   async listMemos(pageSize?: number, pageToken?: string): Promise<ListMemosResponse> {
-    const params: Record<string, any> = {};
-    if (pageSize) params.pageSize = pageSize;
-    if (pageToken) params.pageToken = pageToken;
-    
-    const response = await this.client.get<ListMemosResponse>('/memos', { params });
-    return response.data;
+    // TODO: Implement GET /api/v1/memos with pagination
+    throw new Error('Not implemented');
   }
 
   async getMemo(name: string): Promise<Memo> {
-    const response = await this.client.get<Memo>(`/memos/${name}`);
-    return response.data;
+    // TODO: Implement GET /api/v1/memos/{name}
+    throw new Error('Not implemented');
   }
 
   async updateMemo(name: string, request: UpdateMemoRequest): Promise<Memo> {
-    const updateMask: string[] = [];
-    if (request.content !== undefined) updateMask.push('content');
-    if (request.visibility !== undefined) updateMask.push('visibility');
-    if (request.pinned !== undefined) updateMask.push('pinned');
-
-    const response = await this.client.patch<Memo>(
-      `/memos/${name}`,
-      request,
-      {
-        params: {
-          updateMask: updateMask.join(','),
-        },
-      }
-    );
-    return response.data;
+    // TODO: Implement PATCH /api/v1/memos/{name}
+    throw new Error('Not implemented');
   }
 
   async deleteMemo(name: string): Promise<void> {
-    await this.client.delete(`/memos/${name}`);
+    // TODO: Implement DELETE /api/v1/memos/{name}
+    throw new Error('Not implemented');
   }
 }
