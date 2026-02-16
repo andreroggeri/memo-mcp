@@ -42,6 +42,39 @@ npm run build
 npm run dev
 ```
 
+## API Client Generation
+
+This project uses `ts-proto` to generate a type-safe client from the Memos Protobuf definitions.
+
+### 1. Fetch Protobuf Files
+
+```bash
+npm run fetch:protos
+```
+
+### 2. Generate Client
+
+```bash
+npm run gen:api
+```
+
+The generated code will be located in `src/gen/`.
+
+### 3. Usage
+
+```typescript
+import { MemoApiClient } from "./memo-api-client.js";
+
+const client = new MemoApiClient({
+  baseUrl: "https://your-memos-instance.com",
+  accessToken: "your-access-token",
+});
+
+// PascalCase methods from generated client
+const response = await client.ListMemos({ pageSize: 10 });
+console.log(response.memos);
+```
+
 ## Project Structure
 
 ```
