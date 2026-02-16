@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Directory containing proto files
 PROTO_DIR="proto"
