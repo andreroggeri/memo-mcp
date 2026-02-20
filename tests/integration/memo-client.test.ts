@@ -48,11 +48,6 @@ describe("MemoApiClient (integration)", () => {
       updateMask: ["content"],
     });
 
-    await client.UpsertMemoReaction({
-      name: created.name,
-      reaction: { reactionType: "👍" },
-    });
-
     expect(response.content).toBe(updatedContent);
   });
 
