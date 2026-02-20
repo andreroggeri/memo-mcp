@@ -8,12 +8,12 @@
 - `neosmemo/memos:canary` or nightly tags for fastest updates.
 - `lincolnthalles/memos` (community builds) for faster pulls or different packaging.
 
-## Decision: Enable demo mode for tests via `MEMOS_MODE=demo`
+## Decision: Use prod mode with a seeded fixture DB via `MEMOS_MODE=prod`
 
-**Rationale**: The runtime options for Memos explicitly support a `demo` mode through `MEMOS_MODE`. This avoids the need to bootstrap a real user and API token for automated tests, keeping the integration suite deterministic and self-contained.
+**Rationale**: A pre-seeded SQLite fixture (`tests/fixtures/db/memos_prod.db`) provides a stable user and access token without needing to bootstrap accounts at runtime. Running in `prod` mode ensures the server uses the fixture database.
 
 **Alternatives considered**:
-- Running in `prod` mode and manually seeding an admin token.
+- Using demo mode with runtime bootstrapping.
 - Attempting to drive the UI for first-time setup (fragile and slow).
 
 ## Decision: Use Testcontainers wait strategy for listening ports (and increase startup timeout)

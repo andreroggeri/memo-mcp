@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   MEMO_ACCESS_TOKEN,
+  MEMO_DB_FILENAME,
   MEMO_IMAGE,
   MEMO_MODE,
   MEMO_PORT,
@@ -24,33 +25,39 @@ const fixtureDbPath = path.resolve(
   "..",
   "fixtures",
   "db",
-  "memos_prod.db"
+  String(MEMO_DB_FILENAME)
 );
 
+const memoImage = String(MEMO_IMAGE);
+const memoMode = String(MEMO_MODE);
+const memoPort = Number(MEMO_PORT);
+const startupTimeoutMs = Number(MEMO_STARTUP_TIMEOUT_MS);
+
 async function prepareFixtureDir(): Promise<string> {
+  await fs.access(fixtureDbPath);
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "memo-fixture-"));
-  const targetDbPath = path.join(tempDir, "memos_prod.db");
+  const targetDbPath = path.join(tempDir, String(MEMO_DB_FILENAME));
   await fs.copyFile(fixtureDbPath, targetDbPath);
   return tempDir;
 }
 
 export async function startMemoContainer(): Promise<MemoTestContext> {
   const fixtureDir = await prepareFixtureDir();
-  const container = await new GenericContainer(MEMO_IMAGE)
-    .withExposedPorts(MEMO_PORT)
-    .withEnvironment({ MEMOS_MODE: MEMO_MODE })
+  const container = await new GenericContainer(memoImage)
+    .withExposedPorts(memoPort)
+    .withEnvironment({ MEMOS_MODE: memoMode })
     .withBindMounts([{ source: fixtureDir, target: "/var/opt/memos" }])
     .withWaitStrategy(Wait.forListeningPorts())
-    .withStartupTimeout(MEMO_STARTUP_TIMEOUT_MS)
+    .withStartupTimeout(startupTimeoutMs)
     .start();
 
   const host = container.getHost();
-  const port = container.getMappedPort(MEMO_PORT);
+  const port = container.getMappedPort(memoPort);
 
   return {
     container,
     baseUrl: `http://${host}:${port}`,
-    accessToken: MEMO_ACCESS_TOKEN,
+    accessToken: String(MEMO_ACCESS_TOKEN),
     fixtureDir,
   };
 }
@@ -68,17 +75,19 @@ export function useMemoTestContainer(): () => MemoTestContext {
 
   beforeAll(async () => {
     context = await startMemoContainer();
-  }, MEMO_STARTUP_TIMEOUT_MS);
+  }, startupTimeoutMs);
 
   afterAll(async () => {
     if (context) {
       await stopMemoContainer(context.container, context.fixtureDir);
     }
-  }, MEMO_STARTUP_TIMEOUT_MS);
+  }, startupTimeoutMs);
 
   return () => {
     if (!context) {
-      throw new Error("Memo test container not initialized yet.");
+      throw new Error(
+        "Memo test container is not available. This may happen if tests access the context before beforeAll has completed, or if the container failed to start in beforeAll. Check that startMemoContainer ran successfully and that the container started without errors."
+      );
     }
     return context;
   };
