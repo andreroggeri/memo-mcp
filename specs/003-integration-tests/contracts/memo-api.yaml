@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Memos API (Integration Test Scope)
-  version: "1.0"
+  version: '1.0'
 paths:
   /api/v1/memos:
     get:
@@ -12,7 +12,7 @@ paths:
           schema:
             type: integer
       responses:
-        "200":
+        '200':
           description: List of memos
     post:
       summary: Create memo
@@ -21,9 +21,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MemoCreate"
+              $ref: '#/components/schemas/MemoCreate'
       responses:
-        "200":
+        '200':
           description: Created memo
   /api/v1/{name}:
     get:
@@ -35,7 +35,7 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Memo
     patch:
       summary: Update memo
@@ -50,9 +50,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MemoUpdate"
+              $ref: '#/components/schemas/MemoUpdate'
       responses:
-        "200":
+        '200':
           description: Updated memo
     delete:
       summary: Delete memo
@@ -63,7 +63,7 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Deleted
 components:
   schemas:

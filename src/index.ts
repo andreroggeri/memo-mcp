@@ -36,12 +36,15 @@ server.server.onerror = (error) => {
 };
 
 process.on('SIGINT', () => {
-  server.close().then(() => {
-    process.exit(0);
-  }).catch((error) => {
-    console.error('Error closing server:', error);
-    process.exit(1);
-  });
+  server
+    .close()
+    .then(() => {
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error('Error closing server:', error);
+      process.exit(1);
+    });
 });
 
 async function main() {

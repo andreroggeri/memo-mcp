@@ -79,11 +79,11 @@ The generated code will be located in `src/gen/`.
 ### 3. Usage
 
 ```typescript
-import { MemoApiClient } from "./memo-api-client.js";
+import { MemoApiClient } from './memo-api-client.js';
 
 const client = new MemoApiClient({
-  baseUrl: "https://your-memos-instance.com",
-  accessToken: "your-access-token",
+  baseUrl: 'https://your-memos-instance.com',
+  accessToken: 'your-access-token',
 });
 
 // PascalCase methods from generated client

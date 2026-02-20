@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { MemoApiClient, MemoApiError } from "../../src/memo-api-client.js";
-import { useMemoTestContainer } from "./memo-container.js";
+import { describe, expect, it } from 'vitest';
+import { MemoApiClient, MemoApiError } from '../../src/memo-api-client.js';
+import { useMemoTestContainer } from './memo-container.js';
 
 const getContext = useMemoTestContainer();
 
@@ -19,15 +19,15 @@ const assertMemoApiError = (error: unknown): MemoApiError => {
   throw error;
 };
 
-describe("MemoApiClient (integration)", () => {
-  it("should be instantiable", () => {
+describe('MemoApiClient (integration)', () => {
+  it('should be instantiable', () => {
     const client = createClient();
     expect(client).toBeDefined();
   });
 
-  it("should list memos from the real instance", async () => {
+  it('should list memos from the real instance', async () => {
     const client = createClient();
-    const content = uniqueContent("list");
+    const content = uniqueContent('list');
     const created = await client.CreateMemo({ memo: { content } });
     const response = await client.ListMemos({ pageSize: 10 });
     expect(response.memos?.length).toBeGreaterThan(0);
@@ -35,38 +35,38 @@ describe("MemoApiClient (integration)", () => {
     expect(created.name).toBeDefined();
   });
 
-  it("should create a memo", async () => {
+  it('should create a memo', async () => {
     const client = createClient();
-    const content = uniqueContent("create");
+    const content = uniqueContent('create');
 
     const response = await client.CreateMemo({ memo: { content } });
-    expect(response.name).toContain("memos/");
+    expect(response.name).toContain('memos/');
     expect(response.content).toBe(content);
   });
 
-  it("should update a memo", async () => {
+  it('should update a memo', async () => {
     const client = createClient();
-    const content = uniqueContent("update");
+    const content = uniqueContent('update');
     const created = await client.CreateMemo({ memo: { content } });
     const updatedContent = `${content}-updated`;
     const response = await client.UpdateMemo({
       memo: { name: created.name, content: updatedContent },
-      updateMask: ["content"],
+      updateMask: ['content'],
     });
 
     expect(response.content).toBe(updatedContent);
-  });  
+  });
 
-  it("should delete a memo", async () => {
+  it('should delete a memo', async () => {
     const client = createClient();
-    const content = uniqueContent("delete");
+    const content = uniqueContent('delete');
     const created = await client.CreateMemo({ memo: { content } });
 
     await client.DeleteMemo({ name: created.name });
 
     try {
       await client.GetMemo({ name: created.name });
-      expect.fail("Expected GetMemo to fail for deleted memo");
+      expect.fail('Expected GetMemo to fail for deleted memo');
     } catch (error: unknown) {
       const err = assertMemoApiError(error);
       expect(err.status).toBe(404);
@@ -74,18 +74,18 @@ describe("MemoApiClient (integration)", () => {
   });
 });
 
-describe("MemoApiError (integration)", () => {
-  it("should preserve error details from real server responses", async () => {
+describe('MemoApiError (integration)', () => {
+  it('should preserve error details from real server responses', async () => {
     const client = createClient();
 
     try {
-      await client.GetMemo({ name: "memos/does-not-exist" });
-      expect.fail("Should have thrown MemoApiError");
+      await client.GetMemo({ name: 'memos/does-not-exist' });
+      expect.fail('Should have thrown MemoApiError');
     } catch (error: unknown) {
       const err = assertMemoApiError(error);
       expect(err.status).toBe(404);
       expect(err.code).toBeDefined();
-      expect(typeof err.code).toBe("string");
+      expect(typeof err.code).toBe('string');
     }
   });
 });
