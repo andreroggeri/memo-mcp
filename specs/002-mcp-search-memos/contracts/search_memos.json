@@ -1,0 +1,16 @@
+{
+  "name": "search_memos",
+  "description": "Search for memos by content query (Dummy implementation)",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "Text query to search for in memo content"
+      }
+    },
+    "required": [
+      "query"
+    ]
+  }
+}

@@ -37,6 +37,20 @@ interface Rpc {
   request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
 }
 
+interface MethodConfig<TReq = any, TRes = any> {
+  req: {
+    decode(data: Uint8Array): TReq;
+    toJSON(message: TReq): any;
+  };
+  res: {
+    encode(message: TRes): { finish(): Uint8Array };
+    fromJSON(object: any): TRes;
+  };
+  method: "GET" | "POST" | "PATCH" | "DELETE";
+  path: (req: TReq) => string;
+  getBody?: (req: any) => any;
+}
+
 /**
  * Adapter that implements the Rpc interface required by ts-proto generated clients.
  * It maps gRPC method calls to REST/JSON endpoints used by gRPC-Gateway.
@@ -58,7 +72,7 @@ export class MemosRpcAdapter implements Rpc {
       (response) => response,
       (error: AxiosError) => {
         if (error.response) {
-          const data = error.response.data as any;
+          const data = error.response.data as { message?: string; code?: string; details?: any };
           throw new MemoApiError(
             data.message || error.message,
             error.response.status,
@@ -81,59 +95,58 @@ export class MemosRpcAdapter implements Rpc {
     const url = config.path(requestMsg);
     const axiosMethod = config.method.toLowerCase() as "get" | "post" | "patch" | "delete";
 
-    let responseData: any;
+    let responseData: unknown;
     if (axiosMethod === "get") {
-      const json = config.req.toJSON(requestMsg);
+      const json = config.req.toJSON(requestMsg) as Record<string, unknown>;
       const response = await this.axiosInstance.get(url, { params: json });
       responseData = response.data;
     } else if (axiosMethod === "post" || axiosMethod === "patch") {
       const json = config.req.toJSON(requestMsg);
       const body = config.getBody ? config.getBody(json) : json;
-      const response = await this.axiosInstance[axiosMethod](url, body);
+      const response = await this.axiosInstance[axiosMethod](url, body); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
       responseData = response.data;
     } else if (axiosMethod === "delete") {
       const response = await this.axiosInstance.delete(url);
       responseData = response.data;
     }
 
-    const responseMsg = config.res.fromJSON(responseData);
-    return config.res.encode(responseMsg).finish();
+    const responseMsg = config.res.fromJSON(responseData); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+    return config.res.encode(responseMsg).finish(); // eslint-disable-line @typescript-eslint/no-unsafe-return
   }
 
-  private getMethodConfig(method: string): any {
-    const configs: Record<string, any> = {
+  private getMethodConfig(method: string): MethodConfig | undefined {
+    const configs: Record<string, MethodConfig> = {
       ListMemos: {
         req: ListMemosRequest,
         res: ListMemosResponse,
         method: "GET",
         path: () => "/api/v1/memos",
-        getParams: (req: any) => req,
       },
       GetMemo: {
         req: GetMemoRequest,
         res: Memo,
         method: "GET",
-        path: (req: any) => `/api/v1/${req.name}`,
+        path: (req: GetMemoRequest) => `/api/v1/${req.name}`,
       },
       CreateMemo: {
         req: CreateMemoRequest,
         res: Memo,
         method: "POST",
         path: () => "/api/v1/memos",
-        getBody: (req: any) => req.memo,
+        getBody: (req: CreateMemoRequest) => req.memo, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
       },
       UpdateMemo: {
         req: UpdateMemoRequest,
         res: Memo,
         method: "PATCH",
-        path: (req: any) => `/api/v1/${req.memo.name}`,
-        getBody: (req: any) => req.memo,
+        path: (req: UpdateMemoRequest) => `/api/v1/${req.memo?.name ?? ""}`,
+        getBody: (req: UpdateMemoRequest) => req.memo, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
       },
       DeleteMemo: {
         req: DeleteMemoRequest,
         res: Empty,
         method: "DELETE",
-        path: (req: any) => `/api/v1/${req.name}`,
+        path: (req: DeleteMemoRequest) => `/api/v1/${req.name}`,
       },
     };
     return configs[method];

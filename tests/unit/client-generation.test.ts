@@ -1,11 +1,11 @@
-import axios from "axios";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import axios, { AxiosInstance } from "axios";
+import { beforeEach, describe, expect, it, vi, Mock } from "vitest";
 import { MemoApiClient, MemoApiError } from "../../src/memo-api-client.js";
 
 vi.mock("axios");
 
 describe("MemoApiClient", () => {
-  let interceptorErrorCallback: any;
+  let interceptorErrorCallback: ((error: any) => any) | undefined;
 
   const mockAxiosInstance = {
     get: vi.fn(),
@@ -14,7 +14,7 @@ describe("MemoApiClient", () => {
     delete: vi.fn(),
     interceptors: {
       response: {
-        use: vi.fn((success, error) => {
+        use: vi.fn((_success, error: (err: any) => any) => {
           interceptorErrorCallback = error;
         }),
       },
@@ -22,17 +22,16 @@ describe("MemoApiClient", () => {
   };
 
   beforeEach(() => {
-    vi.mocked(axios.create).mockReturnValue(mockAxiosInstance as any);
+    (axios.create as Mock).mockReturnValue(mockAxiosInstance as unknown as AxiosInstance);
     vi.clearAllMocks();
     interceptorErrorCallback = undefined;
   });
 
   it("should be instantiable", () => {
-    const client = new MemoApiClient({
+    new MemoApiClient({
       baseUrl: "https://demo.usememos.com",
       accessToken: "test-token",
     });
-    expect(client).toBeDefined();
     expect(axios.create).toHaveBeenCalled();
     expect(mockAxiosInstance.interceptors.response.use).toHaveBeenCalled();
   });
@@ -65,7 +64,7 @@ describe("MemoApiClient", () => {
 
     const response = await client.ListMemos({ pageSize: 10 });
 
-    expect(mockAxiosInstance.get).toHaveBeenCalledWith(
+    expect(mockAxiosInstance.get).toHaveBeenCalledWith( // eslint-disable-line @typescript-eslint/unbound-method
       "/api/v1/memos",
       expect.objectContaining({
         params: expect.objectContaining({ pageSize: 10 }),
@@ -87,10 +86,10 @@ describe("MemoApiClient", () => {
     });
 
     const response = await client.CreateMemo({
-      memo: { content: "new memo" } as any,
+      memo: { content: "new memo" } as any, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
     });
 
-    expect(mockAxiosInstance.post).toHaveBeenCalledWith(
+    expect(mockAxiosInstance.post).toHaveBeenCalledWith( // eslint-disable-line @typescript-eslint/unbound-method
       "/api/v1/memos",
       expect.objectContaining({
         content: "new memo",
@@ -111,11 +110,11 @@ describe("MemoApiClient", () => {
     });
 
     const response = await client.UpdateMemo({
-      memo: { name: "memos/1", content: "updated" } as any,
+      memo: { name: "memos/1", content: "updated" } as any, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
       updateMask: ["content"],
     });
 
-    expect(mockAxiosInstance.patch).toHaveBeenCalledWith(
+    expect(mockAxiosInstance.patch).toHaveBeenCalledWith( // eslint-disable-line @typescript-eslint/unbound-method
       "/api/v1/memos/1",
       expect.objectContaining({
         content: "updated",
@@ -134,7 +133,7 @@ describe("MemoApiClient", () => {
 
     await client.DeleteMemo({ name: "memos/1" });
 
-    expect(mockAxiosInstance.delete).toHaveBeenCalledWith("/api/v1/memos/1");
+    expect(mockAxiosInstance.delete).toHaveBeenCalledWith("/api/v1/memos/1"); // eslint-disable-line @typescript-eslint/unbound-method
   });
 
   it("should throw MemoApiError on API errors", async () => {
@@ -146,9 +145,9 @@ describe("MemoApiClient", () => {
     };
 
     // Simulate axios behavior where interceptor is called on error
-    mockAxiosInstance.get.mockImplementation(async () => {
+    mockAxiosInstance.get.mockImplementation(() => {
       if (interceptorErrorCallback) {
-        throw interceptorErrorCallback(errorResponse);
+        throw interceptorErrorCallback(errorResponse); // eslint-disable-line @typescript-eslint/only-throw-error
       }
       throw errorResponse;
     });
@@ -161,11 +160,12 @@ describe("MemoApiClient", () => {
     try {
       await client.ListMemos({});
       expect.fail("Should have thrown MemoApiError");
-    } catch (e: any) {
-      expect(e).toBeInstanceOf(MemoApiError);
-      expect(e.message).toBe("Not found");
-      expect(e.status).toBe(404);
-      expect(e.code).toBe("NOT_FOUND");
+    } catch (e: unknown) {
+      const err = e as MemoApiError;
+      expect(err).toBeInstanceOf(MemoApiError);
+      expect(err.message).toBe("Not found");
+      expect(err.status).toBe(404);
+      expect(err.code).toBe("NOT_FOUND");
     }
   });
 });

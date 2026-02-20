@@ -6,11 +6,17 @@ MCP (Model Context Protocol) Server foundation for integrating with self-hosted 
 
 ## Overview
 
-This project aims to create an MCP server that enables AI assistants (like Claude) to interact with self-hosted Memo instances, allowing them to create, read, update, and delete memos programmatically.
+This project implements an MCP server that enables AI assistants (like Claude) to interact with self-hosted Memo instances. It uses the Model Context Protocol (MCP) to provide a standard interface for memo management.
+
+## Features
+
+- **MCP Search Tool (Dummy)**: Prototype `search_memos` tool for verifying end-to-end integration without backend dependencies.
+- **Stdio Transport**: Seamless integration with MCP-compatible clients via standard I/O.
+- **Type-Safe API Client**: Automatically generated client from Memos Protobuf definitions using `ts-proto`.
 
 ## Planned Features
 
-- **Full CRUD Operations**: Create, read, update, and delete memos
+- **Full CRUD Operations**: Create, read, update, and delete memos (real backend integration)
 - **Pagination Support**: List memos with pagination for large collections
 - **Visibility Control**: Set memo visibility (Private, Protected, Public)
 - **Resource Access**: Access recent memos as MCP resources
@@ -80,14 +86,24 @@ console.log(response.memos);
 ```
 memo-mcp/
 ├── src/
-│   ├── index.ts              # Main MCP server (TODO: implement)
-│   └── memo-api-client.ts    # Memo API client wrapper (TODO: implement)
+│   ├── index.ts              # Main MCP server with stdio transport
+│   ├── tools/                # MCP Tool implementations
+│   │   ├── index.ts          # Tool registration registry
+│   │   └── search_memos.ts   # Dummy 'search_memos' tool
+│   ├── types/                # Shared type definitions (Memo, Tool)
+│   └── memo-api-client.ts    # Memo API client wrapper (generated)
 ├── package.json
 ├── tsconfig.json
 └── README.md
 ```
 
-## Planned Implementation
+## Current Features
+
+- **MCP Server Scaffold**: Ready-to-use MCP server structure using `@modelcontextprotocol/sdk`.
+- **Stdio Transport**: Communication via standard input/output, compatible with Claude Desktop and other MCP clients.
+- **Search Memos (Dummy)**: A `search_memos` tool that returns hardcoded dummy data for integration testing.
+
+## Next Implementation Steps
 
 ### Tools to Implement
 
