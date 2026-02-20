@@ -1,15 +1,15 @@
-import axios, { AxiosInstance, AxiosError } from "axios";
+import axios, { AxiosError, AxiosInstance } from 'axios';
 import {
-  MemoServiceClientImpl,
+  CreateMemoRequest,
+  DeleteMemoRequest,
+  GetMemoRequest,
   ListMemosRequest,
   ListMemosResponse,
-  GetMemoRequest,
-  CreateMemoRequest,
-  UpdateMemoRequest,
-  DeleteMemoRequest,
   Memo,
-} from "./gen/api/v1/memo_service.js";
-import { Empty } from "./gen/google/protobuf/empty.js";
+  MemoServiceClientImpl,
+  UpdateMemoRequest,
+} from './gen/api/v1/memo_service.js';
+import { Empty } from './gen/google/protobuf/empty.js';
 
 export interface MemoApiClientConfig {
   /** The base URL of the Memos instance (e.g., https://demo.usememos.com) */
@@ -26,30 +26,74 @@ export class MemoApiError extends Error {
     message: string,
     public status?: number,
     public code?: string,
-    public details?: any
+    public details?: unknown
   ) {
     super(message);
-    this.name = "MemoApiError";
+    this.name = 'MemoApiError';
   }
 }
 
 interface Rpc {
-  request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
+  request(
+    service: string,
+    method: string,
+    data: Uint8Array
+  ): Promise<Uint8Array>;
 }
 
-interface MethodConfig<TReq = any, TRes = any> {
+interface MethodConfig<TReq extends object, TRes extends object> {
   req: {
     decode(data: Uint8Array): TReq;
-    toJSON(message: TReq): any;
+    toJSON(message: TReq): unknown;
   };
   res: {
     encode(message: TRes): { finish(): Uint8Array };
-    fromJSON(object: any): TRes;
+    fromJSON(object: object): TRes;
   };
-  method: "GET" | "POST" | "PATCH" | "DELETE";
+  method: 'get' | 'post' | 'patch' | 'delete';
   path: (req: TReq) => string;
-  getBody?: (req: any) => any;
+  getBody?: (req: TReq) => unknown;
 }
+
+const configs = {
+  ListMemos: {
+    req: ListMemosRequest,
+    res: ListMemosResponse,
+    method: 'get',
+    path: () => '/api/v1/memos',
+  },
+  GetMemo: {
+    req: GetMemoRequest,
+    res: Memo,
+    method: 'get',
+    path: (req: GetMemoRequest) => `/api/v1/${req.name}`,
+  },
+  CreateMemo: {
+    req: CreateMemoRequest,
+    res: Memo,
+    method: 'post',
+    path: () => '/api/v1/memos',
+    getBody: (req: CreateMemoRequest) => req.memo,
+  },
+  UpdateMemo: {
+    req: UpdateMemoRequest,
+    res: Memo,
+    method: 'patch',
+    path: (req: UpdateMemoRequest) => {
+      if (!req.memo) {
+        throw new MemoApiError('Memo is required', 400);
+      }
+      return `/api/v1/${req.memo.name}`;
+    },
+    getBody: (req: UpdateMemoRequest) => req.memo,
+  },
+  DeleteMemo: {
+    req: DeleteMemoRequest,
+    res: Empty,
+    method: 'delete',
+    path: (req: DeleteMemoRequest) => `/api/v1/${req.name}`,
+  },
+} as const;
 
 /**
  * Adapter that implements the Rpc interface required by ts-proto generated clients.
@@ -63,7 +107,7 @@ export class MemosRpcAdapter implements Rpc {
       baseURL: config.baseUrl,
       headers: {
         Authorization: `Bearer ${config.accessToken}`,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     });
 
@@ -72,7 +116,11 @@ export class MemosRpcAdapter implements Rpc {
       (response) => response,
       (error: AxiosError) => {
         if (error.response) {
-          const data = error.response.data as { message?: string; code?: string; details?: any };
+          const data = error.response.data as {
+            message?: string;
+            code?: string;
+            details?: unknown;
+          };
           throw new MemoApiError(
             data.message || error.message,
             error.response.status,
@@ -85,71 +133,45 @@ export class MemosRpcAdapter implements Rpc {
     );
   }
 
-  async request(_service: string, method: string, data: Uint8Array): Promise<Uint8Array> {
-    const config = this.getMethodConfig(method);
-    if (!config) {
-      throw new Error(`Method ${method} not implemented in Rpc adapter`);
-    }
-
+  private async processRequest<TReq extends object, TRes extends object>(
+    config: MethodConfig<TReq, TRes>,
+    data: Uint8Array
+  ): Promise<Uint8Array> {
     const requestMsg = config.req.decode(data);
     const url = config.path(requestMsg);
-    const axiosMethod = config.method.toLowerCase() as "get" | "post" | "patch" | "delete";
 
-    let responseData: unknown;
-    if (axiosMethod === "get") {
+    let responseData: TRes;
+
+    // Logic inside here is now type-safe relative to TReq/TRes
+    if (config.method === 'get') {
       const json = config.req.toJSON(requestMsg) as Record<string, unknown>;
-      const response = await this.axiosInstance.get(url, { params: json });
+      const response = await this.axiosInstance.get<TRes>(url, {
+        params: json,
+      });
       responseData = response.data;
-    } else if (axiosMethod === "post" || axiosMethod === "patch") {
+    } else if (config.method === 'post' || config.method === 'patch') {
       const json = config.req.toJSON(requestMsg);
-      const body = config.getBody ? config.getBody(json) : json;
-      const response = await this.axiosInstance[axiosMethod](url, body); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+      const body = config.getBody ? config.getBody(requestMsg) : json;
+      const response = await this.axiosInstance[config.method]<TRes>(url, body);
       responseData = response.data;
-    } else if (axiosMethod === "delete") {
-      const response = await this.axiosInstance.delete(url);
+    } else if (config.method === 'delete') {
+      const response = await this.axiosInstance.delete<TRes>(url);
       responseData = response.data;
+    } else {
+      throw new Error(`Unsupported method: ${config.method as string}`);
     }
 
-    const responseMsg = config.res.fromJSON(responseData); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-    return config.res.encode(responseMsg).finish(); // eslint-disable-line @typescript-eslint/no-unsafe-return
+    const responseMsg = config.res.fromJSON(responseData);
+    return config.res.encode(responseMsg).finish();
   }
 
-  private getMethodConfig(method: string): MethodConfig | undefined {
-    const configs: Record<string, MethodConfig> = {
-      ListMemos: {
-        req: ListMemosRequest,
-        res: ListMemosResponse,
-        method: "GET",
-        path: () => "/api/v1/memos",
-      },
-      GetMemo: {
-        req: GetMemoRequest,
-        res: Memo,
-        method: "GET",
-        path: (req: GetMemoRequest) => `/api/v1/${req.name}`,
-      },
-      CreateMemo: {
-        req: CreateMemoRequest,
-        res: Memo,
-        method: "POST",
-        path: () => "/api/v1/memos",
-        getBody: (req: CreateMemoRequest) => req.memo, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-      },
-      UpdateMemo: {
-        req: UpdateMemoRequest,
-        res: Memo,
-        method: "PATCH",
-        path: (req: UpdateMemoRequest) => `/api/v1/${req.memo?.name ?? ""}`,
-        getBody: (req: UpdateMemoRequest) => req.memo, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-      },
-      DeleteMemo: {
-        req: DeleteMemoRequest,
-        res: Empty,
-        method: "DELETE",
-        path: (req: DeleteMemoRequest) => `/api/v1/${req.name}`,
-      },
-    };
-    return configs[method];
+  async request(
+    _service: string,
+    method: keyof typeof configs,
+    data: Uint8Array
+  ): Promise<Uint8Array> {
+    const config: MethodConfig<object, object> = configs[method];
+    return this.processRequest(config, data);
   }
 }
 
