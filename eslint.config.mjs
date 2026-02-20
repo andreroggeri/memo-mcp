@@ -20,6 +20,12 @@ export default tseslint.config(
     },
   },
   {
+    files: ['**/*.test.ts', '**/tests/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+    },
+  },
+  {
     ignores: [
       'dist/**',
       'node_modules/**',

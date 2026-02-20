@@ -1,16 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { MemoApiClient, MemoApiError } from '../../src/memo-api-client.js';
+import { MemoApiError } from '../../src/memo-api-client.js';
 import { useMemoTestContainer } from './memo-container.js';
+import { getIntegrationMemoClient, uniqueContent } from './test-utils.js';
 
 const getContext = useMemoTestContainer();
-
-const createClient = () => {
-  const { baseUrl, accessToken } = getContext();
-  return new MemoApiClient({ baseUrl, accessToken });
-};
-
-const uniqueContent = (prefix: string) =>
-  `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 const assertMemoApiError = (error: unknown): MemoApiError => {
   if (error instanceof MemoApiError) {
@@ -21,12 +14,12 @@ const assertMemoApiError = (error: unknown): MemoApiError => {
 
 describe('MemoApiClient (integration)', () => {
   it('should be instantiable', () => {
-    const client = createClient();
+    const client = getIntegrationMemoClient(getContext);
     expect(client).toBeDefined();
   });
 
   it('should list memos from the real instance', async () => {
-    const client = createClient();
+    const client = getIntegrationMemoClient(getContext);
     const content = uniqueContent('list');
     const created = await client.CreateMemo({ memo: { content } });
     const response = await client.ListMemos({ pageSize: 10 });
@@ -36,7 +29,7 @@ describe('MemoApiClient (integration)', () => {
   });
 
   it('should create a memo', async () => {
-    const client = createClient();
+    const client = getIntegrationMemoClient(getContext);
     const content = uniqueContent('create');
 
     const response = await client.CreateMemo({ memo: { content } });
@@ -45,7 +38,7 @@ describe('MemoApiClient (integration)', () => {
   });
 
   it('should update a memo', async () => {
-    const client = createClient();
+    const client = getIntegrationMemoClient(getContext);
     const content = uniqueContent('update');
     const created = await client.CreateMemo({ memo: { content } });
     const updatedContent = `${content}-updated`;
@@ -58,7 +51,7 @@ describe('MemoApiClient (integration)', () => {
   });
 
   it('should delete a memo', async () => {
-    const client = createClient();
+    const client = getIntegrationMemoClient(getContext);
     const content = uniqueContent('delete');
     const created = await client.CreateMemo({ memo: { content } });
 
@@ -76,7 +69,7 @@ describe('MemoApiClient (integration)', () => {
 
 describe('MemoApiError (integration)', () => {
   it('should preserve error details from real server responses', async () => {
-    const client = createClient();
+    const client = getIntegrationMemoClient(getContext);
 
     try {
       await client.GetMemo({ name: 'memos/does-not-exist' });
