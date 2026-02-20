@@ -1,0 +1,17 @@
+node_modules/
+tests/
+specs/
+src/
+scripts/
+proto/
+.git/
+.github/
+.codex/
+.specify/
+.opencode/
+.gemini/
+.vscode/
+.idea/
+*.log
+.env*
+coverage/

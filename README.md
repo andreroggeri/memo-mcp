@@ -27,6 +27,7 @@ This project implements an MCP server that enables AI assistants (like Claude) t
 - Node.js 18 or higher
 - A self-hosted Memo instance (https://usememos.com/)
 - Memo API access token
+- Docker (required for integration tests via Testcontainers)
 
 ## Development Setup
 
@@ -46,6 +47,15 @@ npm run build
 
 ```bash
 npm run dev
+```
+
+### Testing
+
+Integration tests run against a real Memo instance via Testcontainers (Docker required).
+The test DB fixture is mounted from `tests/fixtures/db` (via a temp copy) and includes a pre-seeded access token.
+
+```bash
+npm test
 ```
 
 ## API Client Generation
@@ -69,11 +79,11 @@ The generated code will be located in `src/gen/`.
 ### 3. Usage
 
 ```typescript
-import { MemoApiClient } from "./memo-api-client.js";
+import { MemoApiClient } from './memo-api-client.js';
 
 const client = new MemoApiClient({
-  baseUrl: "https://your-memos-instance.com",
-  accessToken: "your-access-token",
+  baseUrl: 'https://your-memos-instance.com',
+  accessToken: 'your-access-token',
 });
 
 // PascalCase methods from generated client
@@ -137,4 +147,3 @@ MIT
 - [Memo (usememos.com)](https://usememos.com/)
 - [Model Context Protocol](https://modelcontextprotocol.io/)
 - [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
-

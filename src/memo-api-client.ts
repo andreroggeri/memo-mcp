@@ -118,13 +118,17 @@ export class MemosRpcAdapter implements Rpc {
         if (error.response) {
           const data = error.response.data as {
             message?: string;
-            code?: string;
+            code?: string | number;
             details?: unknown;
           };
+          const normalizedCode =
+            data.code === undefined || data.code === null
+              ? undefined
+              : String(data.code);
           throw new MemoApiError(
             data.message || error.message,
             error.response.status,
-            data.code,
+            normalizedCode,
             data.details
           );
         }
