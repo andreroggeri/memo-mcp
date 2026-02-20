@@ -1,0 +1,93 @@
+openapi: 3.0.3
+info:
+  title: Memos API (Integration Test Scope)
+  version: "1.0"
+paths:
+  /api/v1/memos:
+    get:
+      summary: List memos
+      parameters:
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of memos
+    post:
+      summary: Create memo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemoCreate"
+      responses:
+        "200":
+          description: Created memo
+  /api/v1/{name}:
+    get:
+      summary: Get memo
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Memo
+    patch:
+      summary: Update memo
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemoUpdate"
+      responses:
+        "200":
+          description: Updated memo
+    delete:
+      summary: Delete memo
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+components:
+  schemas:
+    Memo:
+      type: object
+      properties:
+        name:
+          type: string
+        content:
+          type: string
+    MemoCreate:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+    MemoUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        content:
+          type: string
+      required:
+        - name
+        - content
