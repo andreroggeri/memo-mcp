@@ -27,6 +27,9 @@
     ],
     "*.{ts,tsx,js,jsx}": [
       "eslint --fix"
+    ],
+    "Dockerfile*": [
+      "hadolint"
     ]
   },
   "repository": {

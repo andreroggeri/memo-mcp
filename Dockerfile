@@ -1,8 +1,8 @@
 # Stage 1: Build
 FROM node:22-alpine AS build
 
-# Install protoc
-RUN apk add --no-cache protobuf
+# Install protoc (pin version for reproducibility)
+RUN apk add --no-cache protobuf=31.1-r1
 
 WORKDIR /app
 
@@ -13,8 +13,7 @@ RUN npm ci --ignore-scripts
 
 # Copy source code and build the application
 COPY . .
-RUN npm run gen:api
-RUN npm run build
+RUN npm run gen:api && npm run build
 
 # Stage 2: Production Dependencies
 FROM node:22-alpine AS prod-deps
