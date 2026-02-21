@@ -37,6 +37,13 @@ GOOGLE_FILES=(
   "google/api/launch_stage.proto"
 )
 
+# Core Protobuf files to fetch
+CORE_FILES=(
+  "google/protobuf/empty.proto"
+  "google/protobuf/timestamp.proto"
+  "google/protobuf/field_mask.proto"
+)
+
 # Fetch Memos files
 for FILE in "${MEMOS_FILES[@]}"; do
   echo "Fetching $FILE from Memos..."
@@ -46,6 +53,12 @@ done
 # Fetch Google files
 for FILE in "${GOOGLE_FILES[@]}"; do
   echo "Fetching $FILE from Google..."
+  curl -sSL "$BASE_URL_GOOGLE/$FILE" -o "proto/$FILE"
+done
+
+# Fetch Core Protobuf files from the same source (googleapis has them too)
+for FILE in "${CORE_FILES[@]}"; do
+  echo "Fetching $FILE from Googleapis..."
   curl -sSL "$BASE_URL_GOOGLE/$FILE" -o "proto/$FILE"
 done
 

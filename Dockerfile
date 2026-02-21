@@ -1,6 +1,9 @@
 # Stage 1: Build
 FROM node:22-alpine AS build
 
+# Install protoc
+RUN apk add --no-cache protobuf
+
 WORKDIR /app
 
 # Copy package files for dependency installation
@@ -10,6 +13,7 @@ RUN npm ci --ignore-scripts
 
 # Copy source code and build the application
 COPY . .
+RUN npm run gen:api
 RUN npm run build
 
 # Stage 2: Production Dependencies
