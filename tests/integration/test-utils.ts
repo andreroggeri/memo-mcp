@@ -6,7 +6,7 @@ export const uniqueContent = (prefix: string): string =>
   `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 export const createMemoClient = (context: MemoTestContext): MemoApiClient => {
-  process.env.MEMO_API_URL = context.baseUrl;
+  process.env.MEMO_SERVER_URL = context.baseUrl;
   process.env.MEMO_ACCESS_TOKEN = context.accessToken;
   return getMemoApiClient();
 };

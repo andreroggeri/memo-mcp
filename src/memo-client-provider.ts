@@ -3,11 +3,11 @@ import { MemoApiClient } from './memo-api-client.js';
 let cachedClient: MemoApiClient | undefined;
 
 const readConfigFromEnv = (): { baseUrl: string; accessToken: string } => {
-  const baseUrl = process.env.MEMO_API_URL;
+  const baseUrl = process.env.MEMO_SERVER_URL;
   const accessToken = process.env.MEMO_ACCESS_TOKEN;
 
   if (!baseUrl) {
-    throw new Error('MEMO_API_URL is required.');
+    throw new Error('MEMO_SERVER_URL is required.');
   }
 
   if (!accessToken) {
