@@ -58,6 +58,42 @@ The test DB fixture is mounted from `tests/fixtures/db` (via a temp copy) and in
 npm test
 ```
 
+## Docker Usage
+
+You can run the Memo MCP server using Docker. It supports both **Stdio** (local) and **Streamable HTTP** (remote) transports.
+
+### Run with Stdio (Recommended for local use)
+
+```bash
+docker run -i --rm \
+  -e MEMO_SERVER_URL="https://your-memos-instance.com" \
+  -e MEMO_ACCESS_TOKEN="your-access-token" \
+  ghcr.io/andreroggeri/memo-mcp:latest
+```
+
+> **Note**: The `-i` flag is required because the MCP server communicates via `stdio`.
+
+### Run with HTTP (Recommended for remote use)
+
+```bash
+docker run -p 3000:3000 --rm \
+  -e MCP_TRANSPORT="http" \
+  -e MEMO_SERVER_URL="https://your-memos-instance.com" \
+  -e MEMO_ACCESS_TOKEN="your-access-token" \
+  ghcr.io/andreroggeri/memo-mcp:latest
+```
+
+The server will be available at `http://localhost:3000/mcp`.
+
+### Configuration
+
+The Docker image supports the following environment variables:
+
+- `MEMO_SERVER_URL`: The base URL of your Memo instance (e.g., `https://memos.example.com`).
+- `MEMO_ACCESS_TOKEN`: Your Memo API access token.
+- `MCP_TRANSPORT`: Either `stdio` (default) or `http`.
+- `PORT`: The port for the HTTP server (default: `3000`).
+
 ## API Client Generation
 
 This project uses `ts-proto` to generate a type-safe client from the Memos Protobuf definitions.
@@ -131,7 +167,7 @@ memo-mcp/
 
 The server will require environment variables:
 
-- `MEMO_API_URL`: The base URL of your Memo instance
+- `MEMO_SERVER_URL`: The base URL of your Memo instance
 - `MEMO_ACCESS_TOKEN`: Your Memo API access token
 
 ## Contributing

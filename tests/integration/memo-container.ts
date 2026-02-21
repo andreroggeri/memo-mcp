@@ -1,9 +1,7 @@
-import { GenericContainer, StartedTestContainer, Wait } from 'testcontainers';
-import { afterAll, beforeAll } from 'vitest';
-import { promises as fs } from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { GenericContainer, StartedTestContainer, Wait } from 'testcontainers';
+import { afterAll, beforeAll } from 'vitest';
 import {
   MEMO_ACCESS_TOKEN,
   MEMO_DB_FILENAME,
@@ -17,7 +15,6 @@ export interface MemoTestContext {
   container: StartedTestContainer;
   baseUrl: string;
   accessToken: string;
-  fixtureDir: string;
 }
 
 const fixtureDbPath = path.resolve(
@@ -33,20 +30,16 @@ const memoMode = String(MEMO_MODE);
 const memoPort = Number(MEMO_PORT);
 const startupTimeoutMs = Number(MEMO_STARTUP_TIMEOUT_MS);
 
-async function prepareFixtureDir(): Promise<string> {
-  await fs.access(fixtureDbPath);
-  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'memo-fixture-'));
-  const targetDbPath = path.join(tempDir, String(MEMO_DB_FILENAME));
-  await fs.copyFile(fixtureDbPath, targetDbPath);
-  return tempDir;
-}
-
 export async function startMemoContainer(): Promise<MemoTestContext> {
-  const fixtureDir = await prepareFixtureDir();
   const container = await new GenericContainer(memoImage)
     .withExposedPorts(memoPort)
     .withEnvironment({ MEMOS_MODE: memoMode })
-    .withBindMounts([{ source: fixtureDir, target: '/var/opt/memos' }])
+    .withCopyFilesToContainer([
+      {
+        source: fixtureDbPath,
+        target: path.join('/var/opt/memos', String(MEMO_DB_FILENAME)),
+      },
+    ])
     .withWaitStrategy(Wait.forListeningPorts())
     .withStartupTimeout(startupTimeoutMs)
     .start();
@@ -58,16 +51,13 @@ export async function startMemoContainer(): Promise<MemoTestContext> {
     container,
     baseUrl: `http://${host}:${port}`,
     accessToken: String(MEMO_ACCESS_TOKEN),
-    fixtureDir,
   };
 }
 
 export async function stopMemoContainer(
-  container: StartedTestContainer,
-  fixtureDir: string
+  container: StartedTestContainer
 ): Promise<void> {
   await container.stop();
-  await fs.rm(fixtureDir, { recursive: true, force: true });
 }
 
 export function useMemoTestContainer(): () => MemoTestContext {
@@ -79,7 +69,7 @@ export function useMemoTestContainer(): () => MemoTestContext {
 
   afterAll(async () => {
     if (context) {
-      await stopMemoContainer(context.container, context.fixtureDir);
+      await stopMemoContainer(context.container);
     }
   }, startupTimeoutMs);
 
