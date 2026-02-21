@@ -2,8 +2,6 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
-import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
-import express from 'express';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { tools } from './tools/index.js';
@@ -47,82 +45,64 @@ function createServer() {
   return server;
 }
 
-async function main() {
-  const transportType = process.env.MCP_TRANSPORT || 'stdio';
+export async function startServer(
+  config: {
+    transportType?: string;
+    port?: number;
+  } = {}
+) {
+  const transportType =
+    config.transportType || process.env.MCP_TRANSPORT || 'stdio';
 
   if (transportType === 'http') {
-    // createMcpExpressApp includes recommended security defaults like localhost protection
     const app = createMcpExpressApp();
-    const port = parseInt(process.env.PORT || '3000', 10);
+    const port = config.port || parseInt(process.env.PORT || '3000', 10);
 
-    // Map to store transports and their associated servers by session ID
-    const sessions: {
-      [sessionId: string]: {
-        transport: StreamableHTTPServerTransport;
-        server: McpServer;
-      };
-    } = {};
+    const sessions: Record<string, number> = {};
+    const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
-    app.use(express.json());
+    const server = createServer();
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => randomUUID(),
+      onsessioninitialized: (id) => {
+        console.error(`[MCP] Session initialized: ${id}`);
+        sessions[id] = Date.now();
+      },
+      onsessionclosed: (id) => {
+        console.error(`[MCP] Session closed: ${id}`);
+        delete sessions[id];
+      },
+    });
 
-    // MCP endpoint handling all methods (GET for SSE, POST for messages, DELETE for termination)
-    const mcpHandler = async (req: express.Request, res: express.Response) => {
-      const sessionId = req.headers['mcp-session-id'] as string | undefined;
-
-      try {
-        if (sessionId && sessions[sessionId]) {
-          await sessions[sessionId].transport.handleRequest(req, res, req.body);
-        } else if (
-          !sessionId &&
-          req.method === 'POST' &&
-          isInitializeRequest(req.body)
-        ) {
-          // Initialize new stateful session with its own server instance
-          const server = createServer();
-          const transport = new StreamableHTTPServerTransport({
-            sessionIdGenerator: () => randomUUID(),
-            onsessioninitialized: (id) => {
-              console.error(`Session initialized: ${id}`);
-              sessions[id] = { transport, server };
-            },
-            onsessionclosed: (id) => {
-              console.error(`Session closed: ${id}`);
-              const session = sessions[id];
-              if (session) {
-                session.server
-                  .close()
-                  .catch((err) =>
-                    console.error(
-                      `Error closing server for session ${id}:`,
-                      err
-                    )
-                  );
-                delete sessions[id];
-              }
-            },
-          });
-
-          await server.connect(transport);
-          await transport.handleRequest(req, res, req.body);
-        } else {
-          res.status(400).json({
-            jsonrpc: '2.0',
-            error: {
-              code: -32000,
-              message: 'Invalid session or missing initialization request',
-            },
-            id: null,
-          });
+    const cleanupInterval = setInterval(
+      () => {
+        const now = Date.now();
+        for (const id in sessions) {
+          if (now - sessions[id] > SESSION_TIMEOUT_MS) {
+            console.error(`[MCP] Closing stale session: ${id}`);
+            delete sessions[id];
+          }
         }
+      },
+      5 * 60 * 1000
+    );
+
+    await server.connect(transport);
+
+    app.all('/mcp', async (req, res) => {
+      const sessionId = req.headers['mcp-session-id'] as string | undefined;
+      if (sessionId && sessions[sessionId]) {
+        sessions[sessionId] = Date.now();
+      }
+      try {
+        await transport.handleRequest(req, res, req.body);
       } catch (error) {
-        console.error('Error handling MCP request:', error);
+        console.error('[MCP] Error handling request:', error);
         if (!res.headersSent) {
           res.status(500).send('Internal Server Error');
         }
       }
-    };
-
-    app.all('/mcp', mcpHandler);
+    });
 
     const httpServer = app.listen(port, () => {
       console.error(
@@ -130,25 +110,28 @@ async function main() {
       );
     });
 
-    process.on('SIGINT', () => {
+    const gracefulShutdown = () => {
       console.error('Shutting down HTTP server...');
+      clearInterval(cleanupInterval);
       httpServer.close(() => {
-        // Use IIFE to handle async cleanup within void callback
         void (async () => {
-          for (const id in sessions) {
-            await sessions[id].server.close().catch(() => {});
-          }
+          await server.close().catch(() => {});
           process.exit(0);
         })();
       });
-    });
+    };
+
+    process.on('SIGINT', gracefulShutdown);
+    process.on('SIGTERM', gracefulShutdown);
+
+    return { httpServer, server, transport, sessions, cleanupInterval };
   } else {
     const server = createServer();
     const transport = new StdioServerTransport();
     await server.connect(transport);
     console.error('Memo MCP Server running on stdio');
 
-    process.on('SIGINT', () => {
+    const gracefulShutdown = () => {
       server
         .close()
         .then(() => {
@@ -158,11 +141,24 @@ async function main() {
           console.error('Error closing server:', error);
           process.exit(1);
         });
-    });
+    };
+
+    process.on('SIGINT', gracefulShutdown);
+    process.on('SIGTERM', gracefulShutdown);
+
+    return { server, transport };
   }
 }
 
-main().catch((error) => {
-  console.error('Fatal error in main():', error);
-  process.exit(1);
-});
+// Automatically start if executed directly
+const isMain =
+  process.argv[1] === import.meta.filename ||
+  process.argv[1]?.endsWith('/dist/index.js') ||
+  process.argv[1]?.endsWith('/src/index.ts');
+
+if (isMain) {
+  startServer().catch((error) => {
+    console.error('Fatal error in startServer():', error);
+    process.exit(1);
+  });
+}

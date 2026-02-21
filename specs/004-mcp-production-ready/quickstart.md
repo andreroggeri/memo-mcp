@@ -14,7 +14,7 @@ To run the latest stable version of the MCP server:
 docker run -i --rm
   -e MEMO_ACCESS_TOKEN="your_token_here"
   -e MEMO_SERVER_URL="https://your-memo-server.com"
-  ghcr.io/andre-moras/memo-mcp:latest
+  ghcr.io/andreroggeri/memo-mcp:latest
 ```
 
 > **Note**: The `-i` flag is required because the MCP server communicates via `stdio`.
@@ -24,7 +24,7 @@ docker run -i --rm
 To pull a specific version of the image:
 
 ```bash
-docker pull ghcr.io/andre-moras/memo-mcp:0.1.0
+docker pull ghcr.io/andreroggeri/memo-mcp:1.0.0
 ```
 
 ## Security Notice

@@ -23,6 +23,8 @@ RUN npm ci --omit=dev --ignore-scripts
 # Stage 3: Runtime
 FROM node:22-alpine AS runtime
 
+# Ensure the application directory is owned by the non-privileged user
+RUN mkdir -p /app && chown node:node /app
 WORKDIR /app
 
 # Set non-privileged user for security
