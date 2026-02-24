@@ -85,6 +85,18 @@ docker run -p 3000:3000 --rm \
 
 The server will be available at `http://localhost:3000/mcp`.
 
+### Helm Deployment (Recommended for Kubernetes)
+
+You can deploy the Memo MCP server to Kubernetes using our Helm chart.
+
+```bash
+helm repo add memo-mcp https://andreroggeri.github.io/memo-mcp/
+helm repo update
+helm install my-memo-mcp memo-mcp/memo-mcp \
+  --set memo.server_url="https://your-memos-instance.com" \
+  --set memo.api_key="your-api-key"
+```
+
 ### Configuration
 
 The Docker image supports the following environment variables:

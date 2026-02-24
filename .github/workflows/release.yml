@@ -79,6 +79,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Update Chart Version
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: |
+          VERSION=${{ steps.semantic.outputs.new_release_version }}
+          sed -i "s/^version: .*/version: $VERSION/" charts/memo-mcp/Chart.yaml
+          sed -i "s/^appVersion: .*/appVersion: \"$VERSION\"/" charts/memo-mcp/Chart.yaml
+          echo "Updated Chart.yaml to version $VERSION"
+
+      - name: Run chart-releaser
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: helm/chart-releaser-action@v1.6.0
+        env:
+          CR_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5
