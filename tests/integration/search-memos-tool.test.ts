@@ -16,7 +16,6 @@ describe('searchMemosTool (integration)', () => {
       pageSize: 10,
     });
 
-    expect(results.message).toContain('Found 1 result(s).');
     expect(results.memos).toContainEqual({
       id: expect.any(String),
       content,
@@ -47,6 +46,6 @@ describe('searchMemosTool (integration)', () => {
       pageSize: 10,
     });
 
-    expect(results).toEqual({ message: 'No results found.', memos: [] });
+    expect(results).toEqual({ memos: [] });
   });
 });

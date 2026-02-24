@@ -54,12 +54,7 @@ export const searchMemosTool: ToolDefinition<
       .map(toMemo)
       .filter((memo): memo is Memo => memo !== undefined);
 
-    if (memos.length === 0) {
-      return { message: 'No results found.', memos: [] };
-    }
-
     return {
-      message: `Found ${memos.length} result(s).`,
       memos,
     };
   },

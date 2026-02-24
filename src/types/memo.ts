@@ -11,6 +11,5 @@ export interface Memo {
 }
 
 export interface SearchMemosResult {
-  message: string;
   memos: Memo[];
 }
