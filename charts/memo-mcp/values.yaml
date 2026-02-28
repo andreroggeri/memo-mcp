@@ -65,6 +65,9 @@ mcp:
   transport: http
   # Port the container listens on
   port: 3000
+  # Allowed Host header values (comma-separated). When ingress is enabled, defaults to
+  # ingress hosts + localhost,127.0.0.1. Override here to customize.
+  allowedHosts: ""
 
 # Memo Backend Configuration
 memo:
@@ -77,5 +80,5 @@ memo:
   # Optional: Secret key that stores the access token.
   existingSecretKey: "memo-access-token"
 
-# Additional environment variables
+# Additional environment variables (MCP_ALLOWED_HOSTS is auto-set from ingress when enabled)
 env: []

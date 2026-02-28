@@ -109,6 +109,8 @@ helm install my-memo-mcp memo-mcp/memo-mcp \
   --set memo.existingSecretKey="memo-access-token"
 ```
 
+When using ingress (e.g., with Traefik), `MCP_ALLOWED_HOSTS` is automatically derived from your ingress hosts—no manual configuration needed.
+
 ### Configuration
 
 The Docker image supports the following environment variables:
@@ -117,6 +119,7 @@ The Docker image supports the following environment variables:
 - `MEMO_ACCESS_TOKEN`: Your Memo API access token.
 - `MCP_TRANSPORT`: Either `stdio` (default) or `http`.
 - `PORT`: The port for the HTTP server (default: `3000`).
+- `MCP_ALLOWED_HOSTS`: Comma-separated list of allowed Host header values (e.g., `server.tld,localhost`). Required when running behind a reverse proxy (Traefik, nginx, etc.) since the default only allows `localhost`, `127.0.0.1`, and `[::1]`. **Helm**: When ingress is enabled, this is automatically set from the ingress hosts.
 
 ## API Client Generation
 

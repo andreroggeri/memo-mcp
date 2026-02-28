@@ -52,6 +52,10 @@ spec:
               {{- else }}
               value: {{ .Values.memo.access_token | quote }}
               {{- end }}
+            {{- if or .Values.mcp.allowedHosts (and .Values.ingress.enabled .Values.ingress.hosts) }}
+            - name: MCP_ALLOWED_HOSTS
+              value: {{ .Values.mcp.allowedHosts | default (include "memo-mcp.allowedHosts" .) | quote }}
+            {{- end }}
             {{- with .Values.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

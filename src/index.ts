@@ -1,7 +1,7 @@
+import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { tools } from './tools/index.js';
@@ -55,7 +55,12 @@ export async function startServer(
     config.transportType || process.env.MCP_TRANSPORT || 'stdio';
 
   if (transportType === 'http') {
-    const app = createMcpExpressApp();
+    const allowedHosts = process.env.MCP_ALLOWED_HOSTS
+      ? process.env.MCP_ALLOWED_HOSTS.split(',').map((h) => h.trim())
+      : undefined;
+    const app = createMcpExpressApp({
+      ...{ allowedHosts },
+    });
     const port = config.port || parseInt(process.env.PORT || '3000', 10);
 
     const sessions: Record<string, number> = {};
