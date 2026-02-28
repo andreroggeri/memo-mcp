@@ -67,7 +67,39 @@ export async function startServer(
     const sessions: Record<string, number> = {};
     const transports: Record<string, StreamableHTTPServerTransport> = {};
     const servers: Record<string, McpServer> = {};
+    const closingSessions = new Set<string>();
     const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
+
+    async function cleanupSession(
+      id: string,
+      options: { closeTransport?: boolean; closeServer?: boolean } = {}
+    ) {
+      if (closingSessions.has(id)) {
+        return;
+      }
+      closingSessions.add(id);
+
+      const transport = transports[id];
+      const server = servers[id];
+
+      delete sessions[id];
+      delete transports[id];
+      delete servers[id];
+
+      if (options.closeTransport && transport) {
+        await transport.close().catch((error) => {
+          console.warn(`[MCP] Error closing transport: ${id}`, error);
+        });
+      }
+
+      if (options.closeServer && server) {
+        await server.close().catch((error) => {
+          console.warn(`[MCP] Error closing server: ${id}`, error);
+        });
+      }
+
+      closingSessions.delete(id);
+    }
 
     const cleanupInterval = setInterval(
       () => {
@@ -75,24 +107,10 @@ export async function startServer(
         for (const id in sessions) {
           if (now - sessions[id] > SESSION_TIMEOUT_MS) {
             console.error(`[MCP] Closing stale session: ${id}`);
-            const staleTransport = transports[id];
-            if (staleTransport) {
-              void staleTransport.close().catch((error) => {
-                console.warn(
-                  `[MCP] Error closing stale transport: ${id}`,
-                  error
-                );
-              });
-            }
-            const staleServer = servers[id];
-            if (staleServer) {
-              void staleServer.close().catch((error) => {
-                console.warn(`[MCP] Error closing stale server: ${id}`, error);
-              });
-            }
-            delete transports[id];
-            delete servers[id];
-            delete sessions[id];
+            void cleanupSession(id, {
+              closeTransport: true,
+              closeServer: true,
+            });
           }
         }
       },
@@ -123,18 +141,7 @@ export async function startServer(
             },
             onsessionclosed: (id) => {
               console.error(`[MCP] Session closed: ${id}`);
-              delete sessions[id];
-              delete transports[id];
-              const sessionServer = servers[id];
-              if (sessionServer) {
-                void sessionServer.close().catch((error) => {
-                  console.warn(
-                    `[MCP] Error closing session server: ${id}`,
-                    error
-                  );
-                });
-                delete servers[id];
-              }
+              void cleanupSession(id, { closeServer: true });
             },
           });
 
@@ -143,13 +150,7 @@ export async function startServer(
             if (!id) {
               return;
             }
-            delete sessions[id];
-            delete transports[id];
-            const sessionServer = servers[id];
-            if (sessionServer) {
-              void sessionServer.close().catch(() => {});
-              delete servers[id];
-            }
+            void cleanupSession(id, { closeServer: true });
           };
 
           await server.connect(newTransport);
@@ -190,16 +191,14 @@ export async function startServer(
       clearInterval(cleanupInterval);
       httpServer.close(() => {
         void (async () => {
-          await Promise.all(
-            Object.values(transports).map((sessionTransport) =>
-              sessionTransport.close().catch(() => {})
-            )
-          );
-          await Promise.all(
-            Object.values(servers).map((sessionServer) =>
-              sessionServer.close().catch(() => {})
-            )
-          );
+          await Promise.all([
+            ...Object.keys(transports).map((id) =>
+              cleanupSession(id, { closeTransport: true, closeServer: true })
+            ),
+            ...Object.keys(servers).map((id) =>
+              cleanupSession(id, { closeTransport: true, closeServer: true })
+            ),
+          ]);
           process.exit(0);
         })();
       });
