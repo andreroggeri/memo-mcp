@@ -25,7 +25,11 @@ function createServer() {
         inputSchema: tool.schema.shape,
       },
       async (args: z.infer<typeof tool.schema>) => {
+        console.log(
+          `[MCP] Tool called: ${tool.name} with args: ${JSON.stringify(args, null, 2)}`
+        );
         const result = await tool.handler(args);
+        console.log(`[MCP] Tool result: ${JSON.stringify(result, null, 2)}`);
         return {
           content: [
             {
