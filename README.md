@@ -94,7 +94,19 @@ helm repo add memo-mcp https://andreroggeri.github.io/memo-mcp/
 helm repo update
 helm install my-memo-mcp memo-mcp/memo-mcp \
   --set memo.server_url="https://your-memos-instance.com" \
-  --set memo.api_key="your-api-key"
+  --set memo.access_token="your-access-token"
+```
+
+For better secret hygiene, prefer an existing Kubernetes Secret:
+
+```bash
+kubectl create secret generic memo-mcp-secrets \
+  --from-literal=memo-access-token="your-access-token"
+
+helm install my-memo-mcp memo-mcp/memo-mcp \
+  --set memo.server_url="https://your-memos-instance.com" \
+  --set memo.existingSecretName="memo-mcp-secrets" \
+  --set memo.existingSecretKey="memo-access-token"
 ```
 
 ### Configuration

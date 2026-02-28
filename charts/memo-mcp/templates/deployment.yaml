@@ -24,12 +24,16 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- with .Values.podSecurityContext }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
+          {{- with .Values.securityContext }}
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
@@ -39,8 +43,15 @@ spec:
               value: {{ .Values.mcp.port | quote }}
             - name: MEMO_SERVER_URL
               value: {{ .Values.memo.server_url | quote }}
-            - name: MEMO_API_KEY
-              value: {{ .Values.memo.api_key | quote }}
+            - name: MEMO_ACCESS_TOKEN
+              {{- if .Values.memo.existingSecretName }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.memo.existingSecretName }}
+                  key: {{ .Values.memo.existingSecretKey | default "memo-access-token" }}
+              {{- else }}
+              value: {{ .Values.memo.access_token | quote }}
+              {{- end }}
             {{- with .Values.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -49,19 +60,19 @@ spec:
               containerPort: {{ .Values.mcp.port }}
               protocol: TCP
           livenessProbe:
-            httpGet:
-              path: /mcp
+            tcpSocket:
               port: http
             initialDelaySeconds: 5
             periodSeconds: 10
           readinessProbe:
-            httpGet:
-              path: /mcp
+            tcpSocket:
               port: http
             initialDelaySeconds: 5
             periodSeconds: 10
+          {{- with .Values.resources }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

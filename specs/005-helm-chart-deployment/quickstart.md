@@ -20,7 +20,7 @@
    ```bash
    helm install my-memo-mcp memo-mcp/memo-mcp \
      --set memo.server_url="https://your-memos-instance.com" \
-     --set memo.api_key="your-api-key"
+     --set memo.access_token="your-access-token"
    ```
 
 3. Verify the deployment:

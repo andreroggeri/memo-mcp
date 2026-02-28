@@ -47,10 +47,10 @@
 ### Implementation for User Story 1
 
 - [x] T006 [P] [US1] Define chart metadata in `charts/memo-mcp/Chart.yaml`
-- [x] T007 [P] [US1] Implement default values in `charts/memo-mcp/values.yaml` (including `memo.server_url` and `memo.api_key`)
+- [x] T007 [P] [US1] Implement default values in `charts/memo-mcp/values.yaml` (including `memo.server_url` and `memo.access_token`)
 - [x] T008 [P] [US1] Implement Kubernetes Deployment template in `charts/memo-mcp/templates/deployment.yaml`
 - [x] T009 [P] [US1] Implement Kubernetes Service template in `charts/memo-mcp/templates/service.yaml`
-- [x] T010 [US1] Configure container command, environment (including `MEMO_SERVER_URL` and `MEMO_API_KEY`), and transport in `charts/memo-mcp/templates/deployment.yaml`
+- [x] T010 [US1] Configure container command, environment (including `MEMO_SERVER_URL` and `MEMO_ACCESS_TOKEN`), and transport in `charts/memo-mcp/templates/deployment.yaml`
 - [x] T011 [US1] Add basic resource limits and health probes (Liveness/Readiness) in `charts/memo-mcp/templates/deployment.yaml`
 - [x] T012 [US1] Run `helm lint charts/memo-mcp` to verify template correctness
 

@@ -56,7 +56,7 @@ As a maintainer, I want the Helm chart to be automatically packaged and released
 - **FR-003**: The Helm chart MUST expose the necessary ports for HTTP/SSE traffic (defaulting to a configurable port).
 - **FR-004**: System MUST include a GitHub Actions workflow that implements `helm/chart-releaser-action`.
 - **FR-005**: The Helm chart MUST support standard Kubernetes configuration options (resource limits, node selectors, environment variables) via `values.yaml`.
-- **FR-006**: The Helm chart MUST support configuration of the backend Memo API via `memo.server_url` and `memo.api_key` parameters.
+- **FR-006**: The Helm chart MUST support configuration of the backend Memo API via `memo.server_url` and `memo.access_token` parameters, with support for existing Secret references.
 - **FR-007**: The GitHub Actions workflow MUST handle version incrementing and updating the chart's `index.yaml`.
 
 ### Key Entities _(include if feature involves data)_

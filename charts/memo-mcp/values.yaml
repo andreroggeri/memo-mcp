@@ -34,7 +34,7 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
-resources:
+resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -48,6 +48,10 @@ resources:
 
 autoscaling:
   enabled: false
+
+podSecurityContext: {}
+
+securityContext: {}
 
 nodeSelector: {}
 
@@ -66,8 +70,12 @@ mcp:
 memo:
   # REQUIRED: The URL of the backend Memo API
   server_url: ""
-  # REQUIRED: The API Key for the backend Memo API
-  api_key: ""
+  # REQUIRED unless memo.existingSecretName is set: Access token for the backend Memo API
+  access_token: ""
+  # Optional: Existing Kubernetes Secret name containing the Memo access token.
+  existingSecretName: ""
+  # Optional: Secret key that stores the access token.
+  existingSecretKey: "memo-access-token"
 
 # Additional environment variables
 env: []

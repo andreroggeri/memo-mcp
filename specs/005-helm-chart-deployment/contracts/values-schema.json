@@ -38,9 +38,15 @@
       "type": "object",
       "properties": {
         "server_url": { "type": "string" },
-        "api_key": { "type": "string" }
+        "access_token": { "type": "string" },
+        "existingSecretName": { "type": "string" },
+        "existingSecretKey": { "type": "string" }
       },
-      "required": ["server_url", "api_key"]
+      "required": ["server_url"],
+      "anyOf": [
+        { "required": ["access_token"] },
+        { "required": ["existingSecretName"] }
+      ]
     }
   }
 }
