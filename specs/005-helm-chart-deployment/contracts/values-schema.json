@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Memo MCP Helm Values",
+  "type": "object",
+  "properties": {
+    "image": {
+      "type": "object",
+      "properties": {
+        "repository": { "type": "string" },
+        "tag": { "type": "string" },
+        "pullPolicy": {
+          "type": "string",
+          "enum": ["Always", "Never", "IfNotPresent"]
+        }
+      },
+      "required": ["repository"]
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["ClusterIP", "NodePort", "LoadBalancer", "ExternalName"]
+        },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+      },
+      "required": ["type", "port"]
+    },
+    "mcp": {
+      "type": "object",
+      "properties": {
+        "transport": { "type": "string", "const": "http" },
+        "port": { "type": "integer", "default": 3000 }
+      },
+      "required": ["transport", "port"]
+    },
+    "memo": {
+      "type": "object",
+      "properties": {
+        "server_url": { "type": "string" },
+        "access_token": { "type": "string" },
+        "existingSecretName": { "type": "string" },
+        "existingSecretKey": { "type": "string" }
+      },
+      "required": ["server_url"],
+      "anyOf": [
+        { "required": ["access_token"] },
+        { "required": ["existingSecretName"] }
+      ]
+    }
+  }
+}
