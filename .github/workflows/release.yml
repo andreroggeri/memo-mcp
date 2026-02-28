@@ -56,6 +56,14 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
+      - name: Check for chart changes
+        id: chart-changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            chart:
+              - 'charts/memo-mcp/**'
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
@@ -85,7 +93,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update Chart Version
-        if: steps.semantic.outputs.new_release_published == 'true'
+        if: steps.semantic.outputs.new_release_published == 'true' && steps.chart-changes.outputs.chart == 'true'
         run: |
           VERSION=${{ steps.semantic.outputs.new_release_version }}
           sed -i "s/^version: .*/version: $VERSION/" charts/memo-mcp/Chart.yaml
@@ -93,7 +101,7 @@ jobs:
           echo "Updated Chart.yaml to version $VERSION"
 
       - name: Run chart-releaser
-        if: steps.semantic.outputs.new_release_published == 'true'
+        if: steps.semantic.outputs.new_release_published == 'true' && steps.chart-changes.outputs.chart == 'true'
         uses: helm/chart-releaser-action@v1.6.0
         env:
           CR_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
