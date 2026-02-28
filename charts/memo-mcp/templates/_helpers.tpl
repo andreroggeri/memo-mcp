@@ -51,11 +51,12 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-Build MCP_ALLOWED_HOSTS from ingress hosts + localhost,127.0.0.1.
-Used when ingress is enabled to auto-allow the Host header from the reverse proxy.
+Build MCP_ALLOWED_HOSTS from ingress hosts + service DNS names + localhost,127.0.0.1.
+Used when ingress is enabled to auto-allow the Host header from the reverse proxy and internal cluster access.
 */}}
 {{- define "memo-mcp.allowedHosts" -}}
-{{- $hosts := list "localhost" "127.0.0.1" }}
+{{- $svcName := include "memo-mcp.fullname" . }}
+{{- $hosts := list "localhost" "127.0.0.1" (printf "%s" $svcName) (printf "%s.%s" $svcName .Release.Namespace) (printf "%s.%s.svc.cluster.local" $svcName .Release.Namespace) }}
 {{- range .Values.ingress.hosts }}
 {{- $hosts = prepend $hosts .host }}
 {{- end }}
