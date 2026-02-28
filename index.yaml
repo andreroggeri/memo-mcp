@@ -1,0 +1,20 @@
+apiVersion: v1
+entries:
+  memo-mcp:
+  - apiVersion: v2
+    appVersion: 0.1.2
+    created: "2026-02-28T13:31:57.018906874Z"
+    description: A Helm chart for the Memo MCP Server
+    digest: bad54cb2f44f0aa5e19b16a50c818f94222df01e34a781ae54fbfd14f478c0ac
+    home: https://github.com/andreroggeri/memo-mcp
+    maintainers:
+    - email: andreroggeri@users.noreply.github.com
+      name: andreroggeri
+    name: memo-mcp
+    sources:
+    - https://github.com/andreroggeri/memo-mcp
+    type: application
+    urls:
+    - https://github.com/andreroggeri/memo-mcp/releases/download/memo-mcp-0.1.2/memo-mcp-0.1.2.tgz
+    version: 0.1.2
+generated: "2026-02-28T13:31:57.018912365Z"
